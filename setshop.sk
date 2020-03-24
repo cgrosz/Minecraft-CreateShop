@@ -1,0 +1,82 @@
+command /shop [<offlineplayer>] [<offlineplayer>]:
+    trigger:
+        if arg-1 is not set:
+            send "&7You have to enter the Name of the Player"
+            send "&7%{shop.warp::*}%"
+        else if arg-1 is "claim":
+            # This only prevents a player from claiming a shop IF the
+            # player has a shop warp set, but technically a player
+            # can continue claiming shops if they do not have a shop warp.
+            # NEED FIXING
+            if {shop.warp::*} contains player:
+                broadcast "stopping u have a shop"
+                stop
+            set {_isRegion::*} to regions at the block below the player
+            broadcast "set region: region is: %{_isRegion::*}%"
+            if {_isRegion::1} contains "<none>":
+                broadcast "stopping region is <none>"
+                stop
+            else:
+                broadcast "im in else"
+                set {_hasMembers::*} to {_isRegion::1}'s members
+                broadcast "members: %{_hasMembers::*}%"
+                broadcast "region: %{_isRegion::*}%"
+                if {_hasMembers::*} is not set:
+                    broadcast "members are none"
+                    # broadcast "rg addmember -w shop_world %{_isRegion_}% %player%"
+                    set {_regionPlot::*} to split {_isRegion::1} at "in"
+                    broadcast "region split: %{isRegion::1}%"
+                    broadcast "region[1] no split: %{_regionPlot::1}%"
+                    broadcast "rg addmember -w world %{_regionPlot::1}% %player%"
+                    make console execute "rg addmember -w world %{_regionPlot::1}% %player%"
+                    broadcast "executed console"
+        else if arg-1 is "set":
+            if player has permission "shopwarp.set":
+                set {_isMember} to false
+                set {_regions::*} to regions at the block below the player
+                # broadcast "0"
+                loop {_regions::*}:
+                    # broadcast "enter loop"
+                    set {_regionMembers::*} to {_regions::1}'s members
+                    # broadcast "%{_regions::*}%"
+                    # broadcast "%{_regionMembers::*}%"
+                    if {_regionMembers::*} contains player:
+                        # broadcast "looping"
+                        set {_isMember} to true
+                if {_isMember} is true:
+                    set {shopwarp.loc.%player%} to location of player
+                    send "&7New Shop warp is set"
+                    # broadcast "1"
+                    if {shop.warp::*} contains player:
+                        stop
+                    add player to {shop.warp::*}
+                    # broadcast "2"
+                    stop
+        else if arg-1 is "remove":
+            if player has permission "shopwarp.remove.own":
+                if arg-2 is set:
+                    if player has permission "shopwarp.remove.*":
+                        if {shop.warp::*} contains arg-2:
+                            remove arg-2 from {shop.warp::*}
+                            send "&7%arg-2%&7 got removed"
+                            delete {shopwarp.loc.%arg-2%}
+                            stop
+                        else:
+                            send "&7%arg-2%&7 has no Shop set"
+                            stop
+                    else:
+                        send "&7You can only remove your own shop from the List"
+                else:
+                    if {shop.warp::*} contains player:
+                        remove player from {shop.warp::*}
+                        send "&7You removed your Shop from the List"
+                        delete {shopwarp.loc.%player%}
+            else:
+                send "&7You dont have the permission to Own/Remove a shop"
+        else if {shop.warp::*} contains arg-1:
+            teleport player to {shopwarp.loc.%arg-1%}
+            send "&7You got teleported to the shop of %arg-1%"
+            stop
+        else:
+            send "&7This player does not have a Shop"
+            stop
